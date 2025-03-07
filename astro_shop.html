@@ -733,7 +733,6 @@
 
         // Update page info
         document.title = `${product.title} - Astro Shop`;
-        window.history.pushState({ productId }, "", `?product=${productId}`);
 
         // Set up ways to get back
         setupDetailPageEventListeners();
@@ -746,7 +745,6 @@
           document.getElementById("detail-page").classList.remove("active");
           document.getElementById("list-page").classList.remove("hidden");
           document.title = "Astro Shop";
-          window.history.pushState({}, "", "./");
           return;
         }
 
