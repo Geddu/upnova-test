@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- I went a bit overboard by challenging myself to accomplish this task with a single file.  -->
+    <!-- I severely underestimated the difficulty of this task.  -->
+    <!-- This is definitely not the best approach, but it was a fun exercise. -->
+    <!-- My condolences to the person who has to read this code. :P -->
+    <!-- (did my best with the comments tough) -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Astro Shop</title>
+    <style>
+      /* basics */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+        color: #111;
+        background-color: #fff;
+        overflow-x: hidden;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px;
+      }
+
+      /* The Fonts */
+      h1 {
+        font-size: 48px;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+
+      h3 {
+        font-size: 20px;
+        font-weight: 400;
+        color: #666;
+        margin-bottom: 40px;
+      }
+
+      /* Navigation back to gallery */
+      .back-to-gallery {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background-color: #0f172a;
+        color: white;
+        padding: 10px 16px;
+        border-radius: 6px;
+        font-size: 16px;
+        font-weight: 500;
+        text-decoration: none;
+        margin-bottom: 30px;
+        transition: background-color 0.2s ease, transform 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .back-to-gallery:hover {
+        background-color: #1e293b;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      /* Our grid of products */
+      .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 30px;
+      }
+
+      /* product card */
+      .product-card {
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        position: relative;
+      }
+
+      .product-card:hover:not(.animating) {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+      }
+
+      .product-image {
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+      }
+
+      .product-info {
+        padding: 20px;
+      }
+
+      .product-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .product-description {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 15px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .product-price {
+        font-size: 22px;
+        font-weight: 600;
+      }
+
+      /* The bottom part */
+      footer {
+        margin-top: 60px;
+        text-align: center;
+        color: #666;
+        font-size: 14px;
+        padding: 20px 0;
+      }
+
+      /* The magic that makes things move */
+      .animation-element {
+        position: fixed;
+        z-index: 1000;
+        pointer-events: none;
+        transition: transform 0.2s cubic-bezier(0.2, 0, 0.2, 1),
+          width 0.2s cubic-bezier(0.2, 0, 0.2, 1),
+          height 0.2s cubic-bezier(0.2, 0, 0.2, 1),
+          font-size 0.2s cubic-bezier(0.2, 0, 0.2, 1);
+      }
+
+      .text-clone {
+        background: transparent;
+        padding: 0;
+      }
+
+      .image-clone {
+        object-fit: cover;
+        transform-origin: top left;
+      }
+
+      .title-clone {
+        font-weight: 600;
+        transform-origin: top left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .description-clone {
+        transform-origin: top left;
+        overflow: hidden;
+      }
+
+      .price-clone {
+        font-weight: 600;
+        transform-origin: top left;
+      }
+
+      /* How to show/hide pages */
+      #list-page,
+      #detail-page {
+        transition: visibility 0.01s;
+      }
+
+      #detail-page {
+        opacity: 1;
+        visibility: hidden;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: white;
+        z-index: 50;
+        overflow-y: auto;
+        padding: 40px;
+      }
+
+      #detail-page.active {
+        visibility: visible;
+      }
+
+      #list-page.hidden {
+        opacity: 0.3;
+        pointer-events: none;
+      }
+
+      /* Making the details page look nice */
+      .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 40px;
+        position: relative;
+        z-index: 60;
+      }
+
+      .back-button {
+        font-size: 24px;
+        color: #666;
+        margin-right: 15px;
+        cursor: pointer;
+        text-decoration: none;
+      }
+
+      .breadcrumb a {
+        color: #666;
+        text-decoration: none;
+      }
+
+      .breadcrumb a:hover {
+        color: #000;
+      }
+
+      /* Split the details into two columns - one for pic, one for info */
+      .product-detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 60px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      /* Make it work on phones too */
+      @media (max-width: 768px) {
+        .product-detail-grid {
+          grid-template-columns: 1fr;
+          gap: 30px;
+        }
+
+        .container {
+          padding: 20px;
+        }
+
+        .back-to-gallery {
+          padding: 8px 14px;
+          font-size: 14px;
+          margin-bottom: 20px;
+        }
+
+        #detail-page {
+          padding: 20px;
+        }
+
+        .detail-title {
+          font-size: 32px;
+          margin-bottom: 16px;
+        }
+
+        .detail-description {
+          font-size: 16px;
+          margin-bottom: 24px;
+        }
+
+        .detail-price {
+          font-size: 28px;
+        }
+
+        .breadcrumb {
+          margin-bottom: 20px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .back-to-gallery {
+          display: block;
+          text-align: center;
+          width: 100%;
+          max-width: 220px;
+          margin-left: auto;
+          margin-right: auto;
+        }
+      }
+
+      /* Keep those images from freaking out during transitions */
+      .detail-image {
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        will-change: opacity; /* Optimize for animations */
+        -webkit-backface-visibility: hidden; /* Prevent flickering */
+        backface-visibility: hidden;
+      }
+
+      .detail-title {
+        font-size: 48px;
+        font-weight: 700;
+        margin-bottom: 24px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .detail-description {
+        font-size: 18px;
+        color: #000;
+        margin-bottom: 40px;
+        line-height: 1.6;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .detail-price {
+        font-size: 36px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      /* Extra bits on the details page */
+      .price-note,
+      .add-to-cart,
+      .product-long-description {
+        opacity: 0;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+
+      #detail-page.active .detail-image,
+      #detail-page.active .detail-title,
+      #detail-page.active .detail-description,
+      #detail-page.active .detail-price {
+        opacity: 1;
+        transition-delay: 0.15s;
+      }
+
+      #detail-page.active .price-note,
+      #detail-page.active .add-to-cart,
+      #detail-page.active .product-long-description {
+        opacity: 1;
+        transform: translateY(0);
+        transition-delay: 0.2s;
+      }
+
+      /* buy button */
+      .add-to-cart {
+        display: block;
+        background: #0f172a;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        margin-bottom: 24px;
+      }
+
+      .add-to-cart:hover {
+        background: #1e293b;
+      }
+
+      /* The longer description on detail pages */
+      .product-long-description {
+        font-size: 14px;
+        line-height: 1.7;
+        color: #555;
+      }
+
+      .price-note {
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 16px;
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="list-page" class="page">
+      <div class="container">
+        <h1>Astro Shop</h1>
+        <h3>Take a look in our products, feel free to buy some</h3>
+
+        <a href="index.html" class="back-to-gallery">
+          ← Back to Image Gallery
+        </a>
+
+        <div class="products-grid" id="productsGrid">
+          <!-- We'll drop all the products here with JS -->
+        </div>
+
+        <footer>Built by Ged Stenman @ 2025</footer>
+      </div>
+    </div>
+
+    <div id="detail-page" class="page">
+      <!-- This is where product details will pop up -->
+    </div>
+
+    <!-- Where we keep all those animation pieces -->
+    <div id="clones-container"></div>
+
+    <script>
+      // Here's our product collection - feel free to add more, I just used the ones in the example
+      const products = [
+        {
+          id: 1,
+          title: "705 Shirt Brave",
+          description:
+            "Stay Brave with the 705 Shirt from Ryan Hoffman Collection. Show your bravery and drinks some beer with.",
+          price: 129,
+          image:
+            "https://astro-shop-ten.vercel.app/products/ryan-hoffman-A7f7XRKgUWc-unsplash.webp",
+        },
+        {
+          id: 2,
+          title: "Haryo Setyadi Shirt",
+          description:
+            "Feel the Comfort and Peace of the Haryo Setyadi Shirt white as snow. Don't worry about the stain, it's easy to clean.",
+          price: 199,
+          image:
+            "https://astro-shop-ten.vercel.app/products/haryo-setyadi-acn5ERAeSb4-unsplash.webp",
+        },
+        {
+          id: 3,
+          title: "Faith Yarn shirt",
+          description:
+            "Elevate Your Style and Comfort with the Faith Yarn Shoes. Designed to stay cool and dry all day.",
+          price: 59,
+          image:
+            "https://astro-shop-ten.vercel.app/products/faith-yarn-Wr0TpKqf26s-unsplash.webp",
+        },
+        {
+          id: 4,
+          title: "T Shirt 32",
+          description:
+            "Stay Cool and Dry with the T Shirt 32 from Ryan Hoffman Collection. Relax, run, dream.",
+          price: 99,
+          image:
+            "https://astro-shop-fawn.vercel.app/products/ryan-hoffman-6Nub980bI3I-unsplash.webp",
+        },
+      ];
+
+      // Keeping track of what we're looking at
+      let currentProductId = null;
+
+      // Makes a nice product card
+      function createProductCard(product) {
+        return `
+          <div class="product-card" data-id="${product.id}">
+            <img src="${product.image}" alt="${product.title}" class="product-image">
+            <div class="product-info">
+              <h2 class="product-title">${product.title}</h2>
+              <p class="product-description">${product.description}</p>
+              <div class="product-price">$${product.price}</div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Full product detail view
+      function createProductDetail(product) {
+        return `
+          <div class="breadcrumb">
+            <a href="#" class="back-button">←</a>
+            <a href="#" class="home-link">Home</a>
+            <span>/</span>
+            <a href="#" class="shirts-link">Shirts</a>
+            <span>/</span>
+            <span>${product.title}</span>
+          </div>
+          
+          <div class="product-detail-grid">
+            <div>
+              <img src="${product.image}" alt="${product.title}" class="detail-image">
+            </div>
+            
+            <div>
+              <h1 class="detail-title">${product.title}</h1>
+              <p class="detail-description">${product.description}</p>
+              <div class="detail-price">$${product.price}</div>
+              <p class="price-note">* This is a fictional price</p>
+              <button class="add-to-cart">Add to cart</button>
+              <p class="product-long-description">
+                Lorem ipsum dolor sit, amet consectetur adipisicing elit. Incidunt magnam quia, 
+                explicabo dolor velit aut omnis natus consequatur possimus fuga illo commodi 
+                asperiores dignissimos. Consequuntur nam quae commodi quas, magni
+              </p>
+            </div>
+          </div>
+        `;
+      }
+
+      // card-to-detail animation smoothing
+      function showProductDetail(productId) {
+        const product = products.find((p) => p.id === parseInt(productId));
+        if (!product) return;
+
+        // Remember what we're viewing
+        currentProductId = parseInt(productId);
+
+        // Find the card that was clicked
+        const card = document.querySelector(
+          `.product-card[data-id="${productId}"]`
+        );
+        if (!card) return;
+
+        // Get the detail page ready (but keep it hidden for now)
+        const detailPage = document.getElementById("detail-page");
+        detailPage.innerHTML = createProductDetail(product);
+
+        // Don't let hover effects mess with our animation
+        card.classList.add("animating");
+
+        // FLIP animations... these took a minute to figure out. First, let's get the starting positions
+        // F = First
+        const sourceImage = card.querySelector(".product-image");
+        const sourceTitle = card.querySelector(".product-title");
+        const sourcePrice = card.querySelector(".product-price");
+        const sourceDesc = card.querySelector(".product-description");
+
+        const imageRect = sourceImage.getBoundingClientRect();
+        const titleRect = sourceTitle.getBoundingClientRect();
+        const priceRect = sourcePrice.getBoundingClientRect();
+        const descRect = sourceDesc.getBoundingClientRect();
+
+        // L = Last - show the detail view
+        detailPage.classList.add("active");
+
+        // Get the positions where everything will end up
+        const targetImage = detailPage.querySelector(".detail-image");
+        const targetTitle = detailPage.querySelector(".detail-title");
+        const targetPrice = detailPage.querySelector(".detail-price");
+        const targetDesc = detailPage.querySelector(".detail-description");
+
+        const targetImageRect = targetImage.getBoundingClientRect();
+        const targetTitleRect = targetTitle.getBoundingClientRect();
+        const targetPriceRect = targetPrice.getBoundingClientRect();
+        const targetDescRect = targetDesc.getBoundingClientRect();
+
+        // Hide the real elements - our clones will cover them
+        targetImage.style.opacity = "0";
+        targetTitle.style.opacity = "0";
+        targetPrice.style.opacity = "0";
+        targetDesc.style.opacity = "0";
+
+        // Create some clones to animate
+        const imageClone = document.createElement("img");
+        imageClone.src = sourceImage.src;
+        imageClone.alt = sourceImage.alt;
+        imageClone.classList.add("animation-element", "image-clone");
+        imageClone.style.position = "fixed";
+        imageClone.style.top = `${imageRect.top}px`;
+        imageClone.style.left = `${imageRect.left}px`;
+        imageClone.style.width = `${imageRect.width}px`;
+        imageClone.style.height = `${imageRect.height}px`;
+        imageClone.style.borderRadius =
+          getComputedStyle(sourceImage).borderRadius;
+        imageClone.style.objectFit = "cover";
+        imageClone.style.zIndex = "1000";
+
+        const titleClone = document.createElement("div");
+        titleClone.textContent = sourceTitle.textContent;
+        titleClone.classList.add("animation-element", "title-clone");
+        titleClone.style.position = "fixed";
+        titleClone.style.top = `${titleRect.top}px`;
+        titleClone.style.left = `${titleRect.left}px`;
+        titleClone.style.width = `${titleRect.width}px`;
+        titleClone.style.height = `${titleRect.height}px`;
+        titleClone.style.color = getComputedStyle(sourceTitle).color;
+        titleClone.style.fontFamily = getComputedStyle(sourceTitle).fontFamily;
+        titleClone.style.fontSize = getComputedStyle(sourceTitle).fontSize;
+        titleClone.style.fontWeight = getComputedStyle(sourceTitle).fontWeight;
+        titleClone.style.lineHeight = getComputedStyle(sourceTitle).lineHeight;
+        titleClone.style.textAlign = getComputedStyle(sourceTitle).textAlign;
+        titleClone.style.zIndex = "1000";
+
+        const priceClone = document.createElement("div");
+        priceClone.textContent = sourcePrice.textContent;
+        priceClone.classList.add("animation-element", "price-clone");
+        priceClone.style.position = "fixed";
+        priceClone.style.top = `${priceRect.top}px`;
+        priceClone.style.left = `${priceRect.left}px`;
+        priceClone.style.width = `${priceRect.width}px`;
+        priceClone.style.height = `${priceRect.height}px`;
+        priceClone.style.color = getComputedStyle(sourcePrice).color;
+        priceClone.style.fontFamily = getComputedStyle(sourcePrice).fontFamily;
+        priceClone.style.fontSize = getComputedStyle(sourcePrice).fontSize;
+        priceClone.style.fontWeight = getComputedStyle(sourcePrice).fontWeight;
+        priceClone.style.lineHeight = getComputedStyle(sourcePrice).lineHeight;
+        priceClone.style.zIndex = "1000";
+
+        const descClone = document.createElement("div");
+        descClone.textContent = sourceDesc.textContent;
+        descClone.classList.add("animation-element", "description-clone");
+        descClone.style.position = "fixed";
+        descClone.style.top = `${descRect.top}px`;
+        descClone.style.left = `${descRect.left}px`;
+        descClone.style.width = `${descRect.width}px`;
+        descClone.style.height = `${descRect.height}px`;
+        descClone.style.color = getComputedStyle(sourceDesc).color;
+        descClone.style.fontFamily = getComputedStyle(sourceDesc).fontFamily;
+        descClone.style.fontSize = getComputedStyle(sourceDesc).fontSize;
+        descClone.style.fontWeight = getComputedStyle(sourceDesc).fontWeight;
+        descClone.style.lineHeight = getComputedStyle(sourceDesc).lineHeight;
+        descClone.style.overflow = "hidden";
+        descClone.style.webkitLineClamp = "2";
+        descClone.style.webkitBoxOrient = "vertical";
+        descClone.style.display = "-webkit-box";
+        descClone.style.zIndex = "1000";
+
+        // Add all our clones to the container
+        const clonesContainer = document.getElementById("clones-container");
+        clonesContainer.innerHTML = "";
+        clonesContainer.appendChild(imageClone);
+        clonesContainer.appendChild(titleClone);
+        clonesContainer.appendChild(priceClone);
+        clonesContainer.appendChild(descClone);
+
+        // I = Invert - figure out how to move from start to finish
+        requestAnimationFrame(() => {
+          // Hide the products list
+          document.getElementById("list-page").classList.add("hidden");
+
+          // P = Play - animate everything to its final position
+          imageClone.style.transform = `translate(${
+            targetImageRect.left - imageRect.left
+          }px, ${targetImageRect.top - imageRect.top}px)`;
+          imageClone.style.width = `${targetImageRect.width}px`;
+          imageClone.style.height = `${targetImageRect.height}px`;
+
+          titleClone.style.transform = `translate(${
+            targetTitleRect.left - titleRect.left
+          }px, ${targetTitleRect.top - titleRect.top}px)`;
+          titleClone.style.width = `${targetTitleRect.width}px`;
+          titleClone.style.height = `${targetTitleRect.height}px`;
+          titleClone.style.fontSize = getComputedStyle(targetTitle).fontSize;
+          titleClone.style.fontWeight =
+            getComputedStyle(targetTitle).fontWeight;
+          titleClone.style.lineHeight =
+            getComputedStyle(targetTitle).lineHeight;
+
+          priceClone.style.transform = `translate(${
+            targetPriceRect.left - priceRect.left
+          }px, ${targetPriceRect.top - priceRect.top}px)`;
+          priceClone.style.width = `${targetPriceRect.width}px`;
+          priceClone.style.height = `${targetPriceRect.height}px`;
+          priceClone.style.fontSize = getComputedStyle(targetPrice).fontSize;
+          priceClone.style.fontWeight =
+            getComputedStyle(targetPrice).fontWeight;
+
+          descClone.style.transform = `translate(${
+            targetDescRect.left - descRect.left
+          }px, ${targetDescRect.top - descRect.top}px)`;
+          descClone.style.width = `${targetDescRect.width}px`;
+          descClone.style.height = `${targetDescRect.height}px`;
+          descClone.style.fontSize = getComputedStyle(targetDesc).fontSize;
+          descClone.style.lineHeight = getComputedStyle(targetDesc).lineHeight;
+          descClone.style.webkitLineClamp = "none";
+          descClone.style.display = "block";
+
+          descClone.style.color = getComputedStyle(targetDesc).color;
+        });
+
+        // Clean everything up after animation finishes
+        setTimeout(() => {
+          // Smooth handoff between clones and real elements
+          const fadeOutClones = () => {
+            // Keep clones until the real stuff is loaded
+            const actualImage = document.querySelector(".detail-image");
+
+            // Wait for images to load before switching
+            if (actualImage.complete) {
+              // Image ready to go
+              performFade();
+            } else {
+              // Let's wait for it
+              actualImage.onload = performFade;
+            }
+
+            function performFade() {
+              // Get ready for the handoff
+              targetImage.style.opacity = "0";
+              targetTitle.style.opacity = "0";
+              targetPrice.style.opacity = "0";
+              targetDesc.style.opacity = "0";
+
+              // Force layout calculation
+              document.body.offsetHeight;
+
+              // Smooth crossfade between clones and real elements
+              targetImage.style.transition = "opacity 0.15s ease";
+              targetTitle.style.transition = "opacity 0.15s ease";
+              targetPrice.style.transition = "opacity 0.15s ease";
+              targetDesc.style.transition = "opacity 0.15s ease";
+
+              // Fade in the real stuff
+              targetImage.style.opacity = "1";
+              targetTitle.style.opacity = "1";
+              targetPrice.style.opacity = "1";
+              targetDesc.style.opacity = "1";
+
+              // Once real elements show up, fade out the clones
+              setTimeout(() => {
+                imageClone.style.transition = "opacity 0.15s ease";
+                titleClone.style.transition = "opacity 0.15s ease";
+                priceClone.style.transition = "opacity 0.15s ease";
+                descClone.style.transition = "opacity 0.15s ease";
+
+                imageClone.style.opacity = "0";
+                titleClone.style.opacity = "0";
+                priceClone.style.opacity = "0";
+                descClone.style.opacity = "0";
+
+                // Clean up when everything's done
+                setTimeout(() => {
+                  clonesContainer.innerHTML = "";
+                  card.classList.remove("animating");
+                }, 160); // Give it a bit longer to be safe
+              }, 80); // Short wait for real elements to show
+            }
+          };
+
+          fadeOutClones();
+        }, 220);
+
+        // Update page info
+        document.title = `${product.title} - Astro Shop`;
+        window.history.pushState({ productId }, "", `?product=${productId}`);
+
+        // Set up ways to get back
+        setupDetailPageEventListeners();
+      }
+
+      // Going back to the product list
+      function showProductList() {
+        // Just switch views if we don't know what product we're on
+        if (!currentProductId) {
+          document.getElementById("detail-page").classList.remove("active");
+          document.getElementById("list-page").classList.remove("hidden");
+          document.title = "Astro Shop";
+          window.history.pushState({}, "", "/");
+          return;
+        }
+
+        console.log("Heading back to the list for product:", currentProductId);
+
+        // Find the card we need to animate back to
+        const targetCard = document.querySelector(
+          `.product-card[data-id="${currentProductId}"]`
+        );
+
+        if (!targetCard) {
+          console.warn(
+            "Can't find that product card, skipping the fancy stuff"
+          );
+          document.getElementById("detail-page").classList.remove("active");
+          document.getElementById("list-page").classList.remove("hidden");
+          document.title = "Astro Shop";
+          window.history.pushState({}, "", "/");
+          currentProductId = null;
+          return;
+        }
+
+        // Bring back the list while keeping the details visible too
+        document.getElementById("list-page").classList.remove("hidden");
+        document.getElementById("list-page").style.opacity = "1";
+
+        // Make sure positions are right
+        document.body.offsetHeight;
+
+        // Grab all the elements we need
+        const detailPage = document.getElementById("detail-page");
+        const sourceImage = detailPage.querySelector(".detail-image");
+        const sourceTitle = detailPage.querySelector(".detail-title");
+        const sourcePrice = detailPage.querySelector(".detail-price");
+        const sourceDesc = detailPage.querySelector(".detail-description");
+
+        const targetImage = targetCard.querySelector(".product-image");
+        const targetTitle = targetCard.querySelector(".product-title");
+        const targetPrice = targetCard.querySelector(".product-price");
+        const targetDesc = targetCard.querySelector(".product-description");
+
+        // Get positions of all elements
+        const sourceImageRect = sourceImage.getBoundingClientRect();
+        const sourceTitleRect = sourceTitle.getBoundingClientRect();
+        const sourcePriceRect = sourcePrice.getBoundingClientRect();
+        const sourceDescRect = sourceDesc.getBoundingClientRect();
+
+        const targetImageRect = targetImage.getBoundingClientRect();
+        const targetTitleRect = targetTitle.getBoundingClientRect();
+        const targetPriceRect = targetPrice.getBoundingClientRect();
+        const targetDescRect = targetDesc.getBoundingClientRect();
+
+        console.log(
+          "Source image position:",
+          sourceImageRect.left,
+          sourceImageRect.top
+        );
+        console.log(
+          "Target image position:",
+          targetImageRect.left,
+          targetImageRect.top
+        );
+
+        // Hide original elements that will be replaced by clones
+        sourceImage.style.opacity = "0";
+        sourceTitle.style.opacity = "0";
+        sourcePrice.style.opacity = "0";
+        sourceDesc.style.opacity = "0";
+
+        targetImage.style.opacity = "0";
+        targetTitle.style.opacity = "0";
+        targetPrice.style.opacity = "0";
+        targetDesc.style.opacity = "0";
+
+        // Create and position clones at detail view positions
+        const imageClone = document.createElement("img");
+        imageClone.src = sourceImage.src;
+        imageClone.classList.add("animation-element", "image-clone");
+        imageClone.style.position = "fixed";
+        imageClone.style.top = sourceImageRect.top + "px";
+        imageClone.style.left = sourceImageRect.left + "px";
+        imageClone.style.width = sourceImageRect.width + "px";
+        imageClone.style.height = sourceImageRect.height + "px";
+        imageClone.style.borderRadius =
+          getComputedStyle(sourceImage).borderRadius;
+        imageClone.style.objectFit = "cover";
+        imageClone.style.zIndex = "1000";
+
+        const titleClone = document.createElement("div");
+        titleClone.textContent = sourceTitle.textContent;
+        titleClone.classList.add("animation-element", "title-clone");
+        titleClone.style.position = "fixed";
+        titleClone.style.top = sourceTitleRect.top + "px";
+        titleClone.style.left = sourceTitleRect.left + "px";
+        titleClone.style.width = sourceTitleRect.width + "px";
+        titleClone.style.color = getComputedStyle(sourceTitle).color;
+        titleClone.style.lineHeight = getComputedStyle(sourceTitle).lineHeight;
+        titleClone.style.fontSize = "48px";
+        titleClone.style.fontWeight = "600";
+        titleClone.style.zIndex = "1000";
+
+        const priceClone = document.createElement("div");
+        priceClone.textContent = sourcePrice.textContent;
+        priceClone.classList.add("animation-element", "price-clone");
+        priceClone.style.position = "fixed";
+        priceClone.style.top = sourcePriceRect.top + "px";
+        priceClone.style.left = sourcePriceRect.left + "px";
+        priceClone.style.width = sourcePriceRect.width + "px";
+        priceClone.style.fontSize = "36px";
+        priceClone.style.fontWeight = "600";
+        priceClone.style.zIndex = "1000";
+
+        const descClone = document.createElement("div");
+        descClone.textContent = sourceDesc.textContent;
+        descClone.classList.add("animation-element", "description-clone");
+        descClone.style.position = "fixed";
+        descClone.style.top = sourceDescRect.top + "px";
+        descClone.style.left = sourceDescRect.left + "px";
+        descClone.style.width = sourceDescRect.width + "px";
+        descClone.style.height = sourceDescRect.height + "px";
+        descClone.style.color = getComputedStyle(sourceDesc).color;
+        descClone.style.fontFamily = getComputedStyle(sourceDesc).fontFamily;
+        descClone.style.fontSize = getComputedStyle(sourceDesc).fontSize;
+        descClone.style.fontWeight = getComputedStyle(sourceDesc).fontWeight;
+        descClone.style.lineHeight = getComputedStyle(sourceDesc).lineHeight;
+        descClone.style.overflow = "hidden";
+        descClone.style.webkitLineClamp = "2";
+        descClone.style.webkitBoxOrient = "vertical";
+        descClone.style.display = "-webkit-box";
+        descClone.style.zIndex = "1000";
+
+        // Add clones to container
+        const clonesContainer = document.getElementById("clones-container");
+        clonesContainer.innerHTML = "";
+        clonesContainer.appendChild(imageClone);
+        clonesContainer.appendChild(titleClone);
+        clonesContainer.appendChild(priceClone);
+        clonesContainer.appendChild(descClone);
+
+        // Hide detail page
+        document.getElementById("detail-page").classList.remove("active");
+
+        // Wait for browser to catch up
+        window.requestAnimationFrame(() => {
+          // Let's animate everything back
+          imageClone.style.transition = "all 0.3s cubic-bezier(0.2, 0, 0.2, 1)";
+          titleClone.style.transition = "all 0.3s cubic-bezier(0.2, 0, 0.2, 1)";
+          priceClone.style.transition = "all 0.3s cubic-bezier(0.2, 0, 0.2, 1)";
+          descClone.style.transition = "all 0.3s cubic-bezier(0.2, 0, 0.2, 1)";
+
+          imageClone.style.transform = `translateX(${
+            targetImageRect.left - sourceImageRect.left
+          }px) translateY(${targetImageRect.top - sourceImageRect.top}px)`;
+          imageClone.style.width = targetImageRect.width + "px";
+          imageClone.style.height = targetImageRect.height + "px";
+
+          titleClone.style.transform = `translateX(${
+            targetTitleRect.left - sourceTitleRect.left
+          }px) translateY(${targetTitleRect.top - sourceTitleRect.top}px)`;
+          titleClone.style.width = targetTitleRect.width + "px";
+          titleClone.style.fontSize = "18px";
+
+          priceClone.style.transform = `translateX(${
+            targetPriceRect.left - sourcePriceRect.left
+          }px) translateY(${targetPriceRect.top - sourcePriceRect.top}px)`;
+          priceClone.style.width = targetPriceRect.width + "px";
+          priceClone.style.fontSize = "22px";
+
+          descClone.style.transform = `translateX(${
+            targetDescRect.left - sourceDescRect.left
+          }px) translateY(${targetDescRect.top - sourceDescRect.top}px)`;
+          descClone.style.width = targetDescRect.width + "px";
+          descClone.style.fontSize = getComputedStyle(targetDesc).fontSize;
+          descClone.style.lineHeight = getComputedStyle(targetDesc).lineHeight;
+          descClone.style.webkitLineClamp = "none";
+          descClone.style.display = "block";
+
+          descClone.style.color = getComputedStyle(targetDesc).color;
+
+          console.log("Animation started");
+        });
+
+        // Wrap things up when animation finishes
+        setTimeout(() => {
+          // Show the original product card elements
+          targetImage.style.opacity = "1";
+          targetTitle.style.opacity = "1";
+          targetPrice.style.opacity = "1";
+          targetDesc.style.opacity = "1";
+
+          clonesContainer.innerHTML = "";
+          targetCard.classList.remove("animating");
+          currentProductId = null;
+
+          console.log("All done with the animation");
+        }, 350);
+
+        // Reset page info
+        document.title = "Astro Shop";
+        window.history.pushState({}, "", "/");
+      }
+
+      // Handle clicks on the back button and breadcrumbs
+      function setupDetailPageEventListeners() {
+        document
+          .querySelector(".back-button")
+          .addEventListener("click", function (e) {
+            e.preventDefault();
+            showProductList();
+          });
+
+        document
+          .querySelectorAll(".home-link, .shirts-link")
+          .forEach((link) => {
+            link.addEventListener("click", function (e) {
+              e.preventDefault();
+              showProductList();
+            });
+          });
+      }
+
+      // Get the shop up and running
+      function initializeShop() {
+        // Show all our cool products
+        const productsGrid = document.getElementById("productsGrid");
+        productsGrid.innerHTML = products.map(createProductCard).join("");
+
+        // Let users click on products
+        productsGrid.addEventListener("click", function (e) {
+          const card = e.target.closest(".product-card");
+          if (card && !card.classList.contains("animating")) {
+            const productId = card.getAttribute("data-id");
+            showProductDetail(productId);
+          }
+        });
+      }
+
+      // Start everything when the page loads
+      document.addEventListener("DOMContentLoaded", initializeShop);
+    </script>
+  </body>
+</html>
