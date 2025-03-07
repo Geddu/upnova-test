@@ -3,6 +3,8 @@
 Hey there! 👋 This repo contains my solutions to two challenging frontend tasks: a smooth product card animation and a high-performance virtualized list.
 You can navigate between the 2 solutions with the "Visit Astro Shop" and "Back to image gallery" buttons!
 
+Check it out live here: https://geddu.github.io/upnova-test/index.html
+
 ## Task 1: The Slick Card-to-Detail Animation
 
 The first challenge was to recreate the smooth animation from [Astro Shop](https://codrops-1f606.kxcdn.com/codrops/wp-content/uploads/2023/10/astro-shop-video.mp4?x17434) using only vanilla JavaScript and CSS (no libraries allowed!).
@@ -18,7 +20,7 @@ Initially proved to be much more challenging than I tought, as I'm used to anima
 - Implemented smooth crossfades between animated clones and real content
 - Added fluid transitions for both opening and closing the detail view
 
-Check out `astro_shop.html` to see it in action - the entire solution is contained in a single file! (which might have been a mistake, and I might go back and slice it up later)
+Check out https://geddu.github.io/upnova-test/astro_shop.html to see it in action - the entire solution is contained in a single file! (which might have been a mistake, and I might go back and slice it up later)
 
 ## Task 2: Rendering 10,000+ Items With No Hiccups
 
@@ -44,7 +46,7 @@ I built a custom virtualization system with these key components:
 
 ## How to Run It
 
-Simply open `index.html` in your browser to see the virtualized list in action. Click the "Visit Astro Shop" button to check out the card animation implementation.
+Simply open https://geddu.github.io/upnova-test/index.html in your browser to see the virtualized list in action. Click the "Visit Astro Shop" button to check out the card animation implementation.
 
 The entire project uses vanilla JavaScript and CSS - no build steps or dependencies required!
 

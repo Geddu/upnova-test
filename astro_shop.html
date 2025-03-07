@@ -388,7 +388,7 @@
         <h1>Astro Shop</h1>
         <h3>Take a look in our products, feel free to buy some</h3>
 
-        <a href="index.html" class="back-to-gallery">
+        <a href="./index.html" class="back-to-gallery">
           ← Back to Image Gallery
         </a>
 
@@ -469,10 +469,10 @@
       function createProductDetail(product) {
         return `
           <div class="breadcrumb">
-            <a href="#" class="back-button">←</a>
-            <a href="#" class="home-link">Home</a>
+            <a href="./" class="back-button">←</a>
+            <a href="./" class="home-link">Home</a>
             <span>/</span>
-            <a href="#" class="shirts-link">Shirts</a>
+            <a href="./" class="shirts-link">Shirts</a>
             <span>/</span>
             <span>${product.title}</span>
           </div>
@@ -746,7 +746,7 @@
           document.getElementById("detail-page").classList.remove("active");
           document.getElementById("list-page").classList.remove("hidden");
           document.title = "Astro Shop";
-          window.history.pushState({}, "", "/");
+          window.history.pushState({}, "", "./");
           return;
         }
 
@@ -764,7 +764,7 @@
           document.getElementById("detail-page").classList.remove("active");
           document.getElementById("list-page").classList.remove("hidden");
           document.title = "Astro Shop";
-          window.history.pushState({}, "", "/");
+          window.history.pushState({}, "", "./");
           currentProductId = null;
           return;
         }
@@ -946,7 +946,7 @@
 
         // Reset page info
         document.title = "Astro Shop";
-        window.history.pushState({}, "", "/");
+        window.history.pushState({}, "", "./");
       }
 
       // Handle clicks on the back button and breadcrumbs
